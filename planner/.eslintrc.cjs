@@ -4,7 +4,10 @@ module.exports = {
         "es2021": true
     },
     "ignorePatterns": ["node_modules",],
-    "extends": "standard-with-typescript",
+    "extends": ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
+    parser: '@typescript-eslint/parser',
+    plugins: ['@typescript-eslint'],
+    root: true,
     "overrides": [
         {
             "env": {
