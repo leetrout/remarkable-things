@@ -1,0 +1,24 @@
+{
+  "name": "remarkable-planner",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "Planner generator for reMarkable 2",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leetrout/remarkable-things.git"
+  },
+  "author": "Lee Trout",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/leetrout/remarkable-things/issues"
+  },
+  "homepage": "https://github.com/leetrout/remarkable-things#readme",
+  "dependencies": {
+    "image-data-uri": "^2.0.1",
+    "jspdf": "^2.5.1"
+  }
+}
