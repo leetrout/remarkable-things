@@ -1,10 +1,17 @@
 import { jsPDF } from "jspdf";
 import * as utils from "./utils.js";
 import * as consts from "./consts.js";
-import { PageIndex } from "./types.js";
+import { Page, PageIndex } from "./types.js";
 import ImageDataURI from "image-data-uri";
 import Colors from "./palette.js";
 import Icons from "./icons.js";
+
+const headerW = utils.pageWPercent(100);
+const headerH = 10;
+const pageMargin = 5;
+const marginTop = 15;
+const availWidth = consts.Wmm - pageMargin * 2;
+const availHeight = consts.Hmm - marginTop - pageMargin;
 
 // FIXME: Pass around in context
 const YEAR = 2024;
@@ -16,7 +23,7 @@ export const layoutMap = {
 
 export async function cover(doc: jsPDF) {
   const imgData: string = await ImageDataURI.encodeFromFile(
-    "./static/cover-sheet-muted-opt.png",
+    "./static/cover-sheet-muted-opt.png"
   );
   doc.addImage(imgData, "PNG", 0, 0, consts.Wmm, consts.Hmm, undefined, "SLOW");
   doc.setFont("helvetica", "bold");
@@ -50,7 +57,7 @@ export async function credit(doc: jsPDF) {
     textTop,
     {
       url: "https://unsplash.com/photos/gray-mountain-during-daytime-photo-3i5PHVp1Fkw",
-    },
+    }
   );
   textTop += lineHeight;
 
@@ -70,7 +77,7 @@ export async function credit(doc: jsPDF) {
   doc.setTextColor(Colors.text);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.textWithLink("@TheCodeWritesMe", utils.pageWPercent(5) + 3, textTop + 2, {
+  doc.textWithLink("TheCodeWritesMe", utils.pageWPercent(5) + 3, textTop + 2, {
     url: "https://twitter.com/TheCodeWritesMe",
   });
 
@@ -78,22 +85,11 @@ export async function credit(doc: jsPDF) {
   textTop = utils.pageHPercent(80);
 }
 
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const dayOfWeekAbbr = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+// Draw a page header box
+function pageHeaderBox(doc: jsPDF) {
+  doc.setFillColor(Colors.lightest);
+  doc.rect(0, 0, headerW, headerH, "F");
+}
 
 function drawMonthCell(
   doc: jsPDF,
@@ -102,7 +98,7 @@ function drawMonthCell(
   x: number,
   y: number,
   w: number,
-  h: number,
+  h: number
 ) {
   doc.setDrawColor(Colors.midDark);
   doc.setFontSize(10);
@@ -136,7 +132,7 @@ function drawMonthCell(
         const ogTC = doc.getTextColor();
         doc.setFontSize(6);
         doc.setTextColor(Colors.midLight);
-        doc.text(dayOfWeekAbbr[c], cellX + cellW / 2, cellY - 0.5, {
+        doc.text(consts.dayOfWeekAbbr[c], cellX + cellW / 2, cellY - 0.5, {
           align: "center",
         });
         doc.setFontSize(ogFS);
@@ -180,14 +176,14 @@ function drawMonthCell(
         {
           align: "center",
           pageNumber: targetDayDetailPage,
-        },
+        }
       );
     }
   }
 
   // Write the name of the month
-  const dims = doc.getTextDimensions(months[month]);
-  doc.textWithLink(months[month], x + w / 2, y + dims.h, {
+  const dims = doc.getTextDimensions(consts.months[month]);
+  doc.textWithLink(consts.months[month], x + w / 2, y + dims.h, {
     align: "center",
     pageNumber: targetMonthDetailPage,
   });
@@ -200,18 +196,27 @@ function drawMonthDetail(
   x: number,
   y: number,
   w: number,
-  h: number,
+  h: number
 ) {
   doc.setDrawColor(Colors.midLight);
   const cellW = w / 7;
   const cellH = h / 7;
-  doc.setFontSize(10);
-  doc.text(months[month], x + w / 2, y + 1, {
-    baseline: "top",
-    align: "center",
-  });
   const lastDay = utils.daysInMonth(month, YEAR);
   const firstDay = new Date(YEAR, month, 1).getDay();
+
+  pageHeaderBox(doc);
+  doc.setTextColor(Colors.text);
+  doc.setFontSize(24);
+  doc.text(
+    consts.months[month],
+    utils.pageWPercent(50),
+    marginTop - pageMargin - 2,
+    {
+      align: "center",
+    }
+  );
+
+  doc.setFontSize(10);
 
   // 7 Rows x 7 cols
   let currentDay = null;
@@ -242,7 +247,7 @@ function drawMonthDetail(
         const ogTC = doc.getTextColor();
         doc.setFontSize(9);
         doc.setTextColor(Colors.midLight);
-        doc.text(dayOfWeekAbbr[c], cellX + cellW / 2, cellY - 1, {
+        doc.text(consts.dayOfWeekAbbr[c], cellX + cellW / 2, cellY - 1, {
           align: "center",
         });
         doc.setFontSize(ogFS);
@@ -285,49 +290,54 @@ export function getCalYear(pageIndex: PageIndex): (doc: jsPDF) => void {
 
 // A page with a year long calendar
 export function calYear(doc: jsPDF, pageIndex: PageIndex) {
-  const pageMargin = 5;
-  const availWidth = consts.Wmm - pageMargin * 2;
-  const availHeight = consts.Hmm - 20 - pageMargin;
   const cellWidth = availWidth / 3;
   const cellHeight = availHeight / 4;
 
-  doc.rect(5, 20, availWidth, availHeight);
+  // Year header
+  pageHeaderBox(doc);
+  doc.setTextColor(Colors.text);
+  doc.setFontSize(24);
+  doc.text(`${YEAR}`, utils.pageWPercent(50), marginTop - pageMargin - 2, {
+    align: "center",
+  });
+
+  doc.rect(pageMargin, marginTop, availWidth, availHeight);
 
   // 3 cols
   doc.line(
     pageMargin + cellWidth,
-    20,
+    marginTop,
     pageMargin + cellWidth,
-    availHeight + 20,
+    availHeight + marginTop
   );
   doc.line(
     pageMargin + cellWidth * 2,
-    20,
+    marginTop,
     pageMargin + cellWidth * 2,
-    availHeight + 20,
+    availHeight + marginTop
   );
 
   // 4 rows
   doc.line(
     pageMargin,
-    20 + cellHeight,
+    marginTop + cellHeight,
     pageMargin + availWidth,
-    20 + cellHeight,
+    marginTop + cellHeight
   );
   doc.line(
     pageMargin,
-    20 + cellHeight * 2,
+    marginTop + cellHeight * 2,
     pageMargin + availWidth,
-    20 + cellHeight * 2,
+    marginTop + cellHeight * 2
   );
   doc.line(
     pageMargin,
-    20 + cellHeight * 3,
+    marginTop + cellHeight * 3,
     pageMargin + availWidth,
-    20 + cellHeight * 3,
+    marginTop + cellHeight * 3
   );
 
-  for (let idx = 0; idx < months.length; idx++) {
+  for (let idx = 0; idx < consts.months.length; idx++) {
     const rowOffset = Math.floor(idx / 3);
     const colOffset = idx % 3;
     drawMonthCell(
@@ -335,9 +345,9 @@ export function calYear(doc: jsPDF, pageIndex: PageIndex) {
       idx,
       pageIndex,
       colOffset * cellWidth + pageMargin,
-      20 + cellHeight * rowOffset,
+      marginTop + cellHeight * rowOffset,
       cellWidth,
-      cellHeight,
+      cellHeight
     );
   }
 }
@@ -345,7 +355,7 @@ export function calYear(doc: jsPDF, pageIndex: PageIndex) {
 export function getCalMonthDetail(
   year: string,
   month: number,
-  pageIndex: PageIndex,
+  pageIndex: PageIndex
 ): (doc: jsPDF) => void {
   return function (doc: jsPDF) {
     calMonthDetail(doc, pageIndex, year, month);
@@ -357,7 +367,7 @@ function calMonthDetail(
   doc: jsPDF,
   pageIndex: PageIndex,
   year: string,
-  month: number,
+  month: number
 ) {
   drawMonthDetail(
     doc,
@@ -366,26 +376,68 @@ function calMonthDetail(
     5,
     10,
     consts.Wmm - 10,
-    consts.Hmm / 2,
+    consts.Hmm / 2
   );
 }
 
 export function getCalDayDetail(
+  pageIndex: PageIndex,
   year: string,
   month: number,
-  date: number,
+  date: number
 ): (doc: jsPDF) => void {
   return function (doc: jsPDF) {
-    calDayDetail(doc, year, month, date);
+    calDayDetail(doc, pageIndex, year, month, date);
   };
 }
 
 // A single day
-function calDayDetail(doc: jsPDF, year: string, month: number, date: number) {
+function calDayDetail(
+  doc: jsPDF,
+  pageIndex: PageIndex,
+  year: string,
+  month: number,
+  date: number
+) {
+  // Set these before the calculations
+  doc.setTextColor(Colors.text);
+  doc.setFontSize(16);
+
   const d = new Date(parseInt(year), month, date);
   const dayName = d.toLocaleDateString("en-US", { weekday: "long" });
-  const msg = `Day detail ${dayName} ${months[month]} ${date}, ${year}`;
-  doc.text(msg, 20, 20);
+
+  const padding = 2;
+  const dateStr = `${date}`;
+  const monthStr = consts.months[month];
+  const yearStr = `${YEAR}`;
+  const dayWidth = doc.getTextWidth(dayName);
+  const monthWidth = doc.getTextWidth(monthStr);
+  const dateWidth = doc.getTextWidth(dateStr);
+  const yearWidth = doc.getTextWidth(yearStr);
+  const totalWidth =
+    padding * 3 + dayWidth + monthWidth + dateWidth + yearWidth;
+  const firstPosX = (consts.Wmm - totalWidth) / 2;
+
+  pageHeaderBox(doc);
+
+  let y = marginTop - pageMargin - 3;
+  let x = firstPosX;
+  doc.text(dayName, x, y);
+  x += padding + dayWidth;
+
+  // Link month
+  doc.textWithLink(monthStr, x, y, {
+    pageNumber: pageIndex[`monthDetail${year}${month}`]
+  });
+  x += padding + monthWidth;
+
+  doc.text(dateStr, x, y);
+  x += padding + dateWidth;
+
+  // Link year
+  doc.textWithLink(yearStr, x, y, {
+    pageNumber: pageIndex.calYearCurrent
+  });
 }
 
 // Text in a rounded rect
@@ -400,7 +452,7 @@ function bubbleText(doc: jsPDF, text: string, x: number, y: number) {
     tSize.h + 2,
     1.5,
     1.5,
-    "F",
+    "F"
   );
 
   doc.text(text, rX, rY);
@@ -428,5 +480,5 @@ export function grid(doc: jsPDF) {
   }
 
   doc.setFillColor(Colors.midDark);
-  bubbleText(doc, "FooBar", consts.Wmm / 2, 12);
+  // bubbleText(doc, "FooBar", consts.Wmm / 2, 12);
 }

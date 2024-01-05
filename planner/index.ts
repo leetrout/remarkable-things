@@ -16,7 +16,7 @@ console.log("util width", utils.pageWPercent(50));
 const plannerCfg: PlannerConfig = {
   year: "2024",
   includeYearCal: true,
-  notePageCount: 0,
+  notePageCount: 1,
 };
 
 // Build the list of pages and index the pages we want to navigate to
@@ -47,7 +47,7 @@ function generatePageSet(cfg: PlannerConfig): [Page[], PageIndex] {
       date++
     ) {
       pages.push({
-        layout: layouts.getCalDayDetail(cfg.year, month, date),
+        layout: layouts.getCalDayDetail(pageIndex, cfg.year, month, date),
       });
       pageIndex[`dayDetail${cfg.year}${month}${date}`] = curPage;
       curPage++;
