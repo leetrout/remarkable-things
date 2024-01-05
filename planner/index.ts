@@ -5,7 +5,7 @@ import * as utils from "./lib/utils.js";
 import * as layouts from "./lib/layouts.js";
 import { PlannerConfig, Page, PageIndex } from "./lib/types.js";
 
-const PLANNER_OUTPUT_NAME="planner.pdf"
+const PLANNER_OUTPUT_NAME = "planner.pdf";
 
 // TODO
 // Configure fonts
@@ -27,10 +27,10 @@ function generatePageSet(cfg: PlannerConfig): [Page[], PageIndex] {
 
   pages.push({ layout: layouts.cover, options: { year: cfg.year } });
   pageIndex.cover = 1;
-  
+
   pages.push({ layout: layouts.credit });
   pageIndex.credit = 2;
-  
+
   pages.push({ layout: layouts.getCalYear(pageIndex) });
   pageIndex.calYearCurrent = 3;
 
@@ -42,7 +42,11 @@ function generatePageSet(cfg: PlannerConfig): [Page[], PageIndex] {
     pageIndex[`monthDetail${cfg.year}${month}`] = curPage;
     curPage++;
 
-    for (let date = 1; date <= utils.daysInMonth(month, parseInt(cfg.year)); date++) {
+    for (
+      let date = 1;
+      date <= utils.daysInMonth(month, parseInt(cfg.year));
+      date++
+    ) {
       pages.push({
         layout: layouts.getCalDayDetail(cfg.year, month, date),
       });
@@ -61,11 +65,11 @@ function generatePageSet(cfg: PlannerConfig): [Page[], PageIndex] {
 }
 
 async function createPlanner(cfg: PlannerConfig) {
-  const [pageSet, pageIndex] = generatePageSet(cfg);
+  const [pageSet] = generatePageSet(cfg);
   const doc = new JSPDF("p", "mm", [consts.Wmm, consts.Hmm], true);
-  for (let pgNum=0; pgNum<pageSet.length; pgNum++) {
-    const page = pageSet[pgNum]
-    
+  for (let pgNum = 0; pgNum < pageSet.length; pgNum++) {
+    const page = pageSet[pgNum];
+
     // The first page is created when the PDF is initialized
     // so only generate new pages after that.
     if (pgNum > 0) {

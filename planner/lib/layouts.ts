@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import * as utils from "./utils.js";
 import * as consts from "./consts.js";
-import { Page, PageIndex } from "./types.js";
+import { PageIndex } from "./types.js";
 import ImageDataURI from "image-data-uri";
 import Colors from "./palette.js";
 
@@ -15,7 +15,7 @@ export const layoutMap = {
 
 export async function cover(doc: jsPDF) {
   const imgData: string = await ImageDataURI.encodeFromFile(
-    "./static/cover-sheet-muted-opt.png"
+    "./static/cover-sheet-muted-opt.png",
   );
   doc.addImage(imgData, "PNG", 0, 0, consts.Wmm, consts.Hmm, undefined, "SLOW");
   doc.setFont("helvetica", "bold");
@@ -43,7 +43,7 @@ export function credit(doc: jsPDF) {
     textTop,
     {
       url: "https://unsplash.com/photos/gray-mountain-during-daytime-photo-3i5PHVp1Fkw",
-    }
+    },
   );
 }
 
@@ -71,7 +71,7 @@ function drawMonthCell(
   x: number,
   y: number,
   w: number,
-  h: number
+  h: number,
 ) {
   doc.setDrawColor(Colors.midDark);
   doc.setFontSize(10);
@@ -149,7 +149,7 @@ function drawMonthCell(
         {
           align: "center",
           pageNumber: targetDayDetailPage,
-        }
+        },
       );
     }
   }
@@ -169,7 +169,7 @@ function drawMonthDetail(
   x: number,
   y: number,
   w: number,
-  h: number
+  h: number,
 ) {
   doc.setDrawColor(Colors.midLight);
   const cellW = w / 7;
@@ -211,7 +211,9 @@ function drawMonthDetail(
         const ogTC = doc.getTextColor();
         doc.setFontSize(9);
         doc.setTextColor(Colors.midLight);
-        doc.text(dayOfWeekAbbr[c], cellX + cellW / 2, cellY - 1, { align: "center" });
+        doc.text(dayOfWeekAbbr[c], cellX + cellW / 2, cellY - 1, {
+          align: "center",
+        });
         doc.setFontSize(ogFS);
         doc.setTextColor(ogTC);
       }
@@ -237,7 +239,7 @@ function drawMonthDetail(
       const dims = doc.getTextDimensions(cellText);
 
       // Put the date in the top left
-      doc.textWithLink(cellText, cellX + 1, cellY + dims.h + .5, {
+      doc.textWithLink(cellText, cellX + 1, cellY + dims.h + 0.5, {
         pageNumber: targetDayDetailPage,
       });
     }
@@ -265,13 +267,13 @@ export function calYear(doc: jsPDF, pageIndex: PageIndex) {
     pageMargin + cellWidth,
     20,
     pageMargin + cellWidth,
-    availHeight + 20
+    availHeight + 20,
   );
   doc.line(
     pageMargin + cellWidth * 2,
     20,
     pageMargin + cellWidth * 2,
-    availHeight + 20
+    availHeight + 20,
   );
 
   // 4 rows
@@ -279,23 +281,22 @@ export function calYear(doc: jsPDF, pageIndex: PageIndex) {
     pageMargin,
     20 + cellHeight,
     pageMargin + availWidth,
-    20 + cellHeight
+    20 + cellHeight,
   );
   doc.line(
     pageMargin,
     20 + cellHeight * 2,
     pageMargin + availWidth,
-    20 + cellHeight * 2
+    20 + cellHeight * 2,
   );
   doc.line(
     pageMargin,
     20 + cellHeight * 3,
     pageMargin + availWidth,
-    20 + cellHeight * 3
+    20 + cellHeight * 3,
   );
 
   for (let idx = 0; idx < months.length; idx++) {
-    const m = months[idx];
     const rowOffset = Math.floor(idx / 3);
     const colOffset = idx % 3;
     drawMonthCell(
@@ -305,7 +306,7 @@ export function calYear(doc: jsPDF, pageIndex: PageIndex) {
       colOffset * cellWidth + pageMargin,
       20 + cellHeight * rowOffset,
       cellWidth,
-      cellHeight
+      cellHeight,
     );
   }
 }
@@ -313,7 +314,7 @@ export function calYear(doc: jsPDF, pageIndex: PageIndex) {
 export function getCalMonthDetail(
   year: string,
   month: number,
-  pageIndex: PageIndex
+  pageIndex: PageIndex,
 ): (doc: jsPDF) => void {
   return function (doc: jsPDF) {
     calMonthDetail(doc, pageIndex, year, month);
@@ -325,7 +326,7 @@ function calMonthDetail(
   doc: jsPDF,
   pageIndex: PageIndex,
   year: string,
-  month: number
+  month: number,
 ) {
   drawMonthDetail(
     doc,
@@ -334,14 +335,14 @@ function calMonthDetail(
     5,
     10,
     consts.Wmm - 10,
-    consts.Hmm / 2
+    consts.Hmm / 2,
   );
 }
 
 export function getCalDayDetail(
   year: string,
   month: number,
-  date: number
+  date: number,
 ): (doc: jsPDF) => void {
   return function (doc: jsPDF) {
     calDayDetail(doc, year, month, date);
@@ -368,7 +369,7 @@ function bubbleText(doc: jsPDF, text: string, x: number, y: number) {
     tSize.h + 2,
     1.5,
     1.5,
-    "F"
+    "F",
   );
 
   doc.text(text, rX, rY);

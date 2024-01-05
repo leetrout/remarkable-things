@@ -5,11 +5,11 @@ const midDark = "#4d4d4d";
 const text = "#3a3a3a";
 
 const Colors = {
-    text,
-    lightest,
-    midLight,
-    midDark,
-    darkest,
-}
+  text,
+  lightest,
+  midLight,
+  midDark,
+  darkest,
+};
 
 export default Colors;

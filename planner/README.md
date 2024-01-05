@@ -11,8 +11,6 @@ have it be configurable and easily updated within the code.
 
 ### Generate a planner
 
-
-
 ```shell
 npm run build
 ```
@@ -35,7 +33,7 @@ I was wrong - this works OK.
 (Aspirational)
 
 The planner config describes the structure of the planner
-with 
+with
 
 ### Page set
 
@@ -58,18 +56,18 @@ The layout functions generate a given layout for a page.
 The available layouts are:
 
 - `cover`
-    - The coversheet, a background image with the year and optional subtitle.
+  - The coversheet, a background image with the year and optional subtitle.
 - `cal-year`
-    - A calendar of the entire year
+  - A calendar of the entire year
 - `cal-month`
-    - A calendar of the entire month
+  - A calendar of the entire month
 - `cal-weeks-year`
-    - A list of weeks in the year
+  - A list of weeks in the year
 - `cal-weeks-month`
-    - A list of weeks in the month
+  - A list of weeks in the month
 - `cal-days-month`
-    - A list of days in the month
+  - A list of days in the month
 - `daily`
-    - A daily organizer / notes layout for each day of the year
+  - A daily organizer / notes layout for each day of the year
 - `notes-grid`
-    - A grid of dots for generic notes following each day
+  - A grid of dots for generic notes following each day
