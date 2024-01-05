@@ -1,126 +1,89 @@
 import { jsPDF as JSPDF } from "jspdf";
-import ImageDataURI from "image-data-uri";
 
-// const DPI = 226
-const pWmm = 157;
-const pHmm = 210;
-// const pWpx = 1404; const pHpx = 1872
-const doc = new JSPDF("p", "mm", [pWmm, pHmm]);
+import * as consts from "./lib/consts.js";
+import * as utils from "./lib/utils.js";
+import * as layouts from "./lib/layouts.js";
+import { PlannerConfig, Page, PageIndex } from "./lib/types.js";
+
+const PLANNER_OUTPUT_NAME="planner.pdf"
 
 // TODO
 // Configure fonts
 // See https://github.com/parallax/jsPDF/tree/master/fontconverter
-console.log(doc.getFontList());
+//console.log(doc.getFontList());
+console.log("util width", utils.pageWPercent(50));
 
-// Utils
-function pageWPercent(n: number): number {
-  return pWmm * (n / 100);
-}
+// TODO: This to support making this extensible
+const plannerCfg: PlannerConfig = {
+  year: "2024",
+  includeYearCal: true,
+  notePageCount: 0,
+};
 
-function pageHPercent(n: number): number {
-  return pHmm * (n / 100);
-}
+// Build the list of pages and index the pages we want to navigate to
+function generatePageSet(cfg: PlannerConfig): [Page[], PageIndex] {
+  const pages = [];
+  const pageIndex: PageIndex = {};
 
-function ptToMM(pt: number): number {
-  return pt * 0.352778;
-}
+  pages.push({ layout: layouts.cover, options: { year: cfg.year } });
+  pageIndex.cover = 1;
+  
+  pages.push({ layout: layouts.credit });
+  pageIndex.credit = 2;
+  
+  pages.push({ layout: layouts.getCalYear(pageIndex) });
+  pageIndex.calYearCurrent = 3;
 
-function numberPage(n: number): void {
-  const r = 2.5;
-  const d = r * 2;
-  const ogFill = doc.getFillColor();
-  doc.setFillColor("#ffffff");
-  doc.setDrawColor("#666666");
-  doc.circle(pWmm - d, pHmm - d, r, "FD");
-  const ogTS = doc.getFontSize();
-  doc.setFontSize(8);
-  doc.text("" + n, pWmm - d, pHmm - d, { align: "center", baseline: "middle" });
-  doc.setFontSize(ogTS);
-  doc.setFillColor(ogFill);
-}
+  let curPage = 4;
+  for (let month = 0; month < 12; month++) {
+    pages.push({
+      layout: layouts.getCalMonthDetail(cfg.year, month, pageIndex),
+    });
+    pageIndex[`monthDetail${cfg.year}${month}`] = curPage;
+    curPage++;
 
-// Title Page
-const imgData: string = await ImageDataURI.encodeFromFile(
-  "./static/cover-sheet-muted-opt.png",
-);
-doc.addImage(imgData, "PNG", 0, 0, pWmm, pHmm);
-doc.setFont("helvetica", "bold");
-doc.setFontSize(100);
-doc.setTextColor("#3a3a3a");
-doc.text("2024", pageWPercent(50), pageHPercent(75), {
-  align: "center",
-});
+    for (let date = 1; date <= utils.daysInMonth(month, parseInt(cfg.year)); date++) {
+      pages.push({
+        layout: layouts.getCalDayDetail(cfg.year, month, date),
+      });
+      pageIndex[`dayDetail${cfg.year}${month}${date}`] = curPage;
+      curPage++;
 
-// Credits
-doc.addPage();
-doc.setTextColor("#3a3a3a");
-doc.setFontSize(8);
-let textTop = pageHPercent(75);
-doc.text("reMarkable Yearly Planner", pageWPercent(5), textTop);
-textTop += ptToMM(12);
-doc.text("by Lee", pageWPercent(5), textTop);
-
-doc.setFontSize(6);
-textTop = pageHPercent(80);
-doc.text("Cover Photo from Unsplash", pageWPercent(5), textTop);
-textTop += ptToMM(6);
-doc.textWithLink(
-  "Massimiliano Morosinotto by therawhunter",
-  pageWPercent(5),
-  textTop,
-  {
-    url: "https://unsplash.com/photos/gray-mountain-during-daytime-photo-3i5PHVp1Fkw",
-  },
-);
-
-numberPage(2);
-
-// Calendar
-doc.addPage();
-doc.setFontSize(16);
-doc.text("Year Calendar Here", 10, 30);
-numberPage(3);
-
-// Index
-doc.addPage();
-doc.setFontSize(16);
-doc.text("Index Here", 10, 30);
-numberPage(4);
-
-// Grid
-doc.addPage();
-doc.setFontSize(16);
-
-doc.setFillColor("#aeaeae");
-const dia = 0.15;
-const pad = 4.9;
-const cols = Math.floor((pWmm - pad) / pad);
-const rows = Math.floor((pHmm - pad) / pad);
-
-for (let x = 1; x <= cols; x++) {
-  for (let y = 1; y <= rows; y++) {
-    const thisX = x * pad;
-    const thisY = y * pad;
-    doc.circle(thisX, thisY, dia, "F");
+      for (let notes = 0; notes < cfg.notePageCount; notes++) {
+        pages.push({
+          layout: layouts.grid,
+        });
+      }
+    }
   }
+  // pages.push({ layout: layouts.grid });
+  return [pages, pageIndex];
 }
 
-const tSize = doc.getTextDimensions("Grid Example");
-doc.setFillColor("#ddd");
-const rX = pWmm / 2 - tSize.w / 2;
-const rY = 12;
-doc.roundedRect(rX - 1, rY - tSize.h, tSize.w + 2, tSize.h + 2, 1.5, 1.5, "F");
+async function createPlanner(cfg: PlannerConfig) {
+  const [pageSet, pageIndex] = generatePageSet(cfg);
+  const doc = new JSPDF("p", "mm", [consts.Wmm, consts.Hmm], true);
+  for (let pgNum=0; pgNum<pageSet.length; pgNum++) {
+    const page = pageSet[pgNum]
+    
+    // The first page is created when the PDF is initialized
+    // so only generate new pages after that.
+    if (pgNum > 0) {
+      doc.addPage();
+    }
+    await page.layout(doc, page.options ? page.options : null);
+  }
 
-doc.text("Grid Example", rX, rY);
+  // All pages are in-place, now we need to update all links
+  // for (let pgNum=0; pgNum<pageSet.length; pgNum++) {
+  //   const page = pageSet[pgNum]
+  //   if (!page.link) {
+  //     continue;
+  //   }
+  //   await page.link(doc, pgNum, pageIndex);
+  // }
 
-numberPage(5);
+  doc.save(PLANNER_OUTPUT_NAME);
+}
 
-// Double Height
-doc.addPage([pWmm, pHmm * 2]);
-doc.setFillColor("#ddd");
-doc.roundedRect(rX - 1, rY - tSize.h, tSize.w + 2, tSize.h + 2, 1.5, 1.5, "F");
-
-doc.text("Double High", rX, rY);
-numberPage(6);
-
-doc.save("jstest.pdf");
+await createPlanner(plannerCfg);
