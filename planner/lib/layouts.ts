@@ -4,8 +4,9 @@ import * as consts from "./consts.js";
 import { PageIndex } from "./types.js";
 import ImageDataURI from "image-data-uri";
 import Colors from "./palette.js";
+import Icons from "./icons.js";
 
-// FIXME
+// FIXME: Pass around in context
 const YEAR = 2024;
 
 export const layoutMap = {
@@ -26,25 +27,55 @@ export async function cover(doc: jsPDF) {
   });
 }
 
-export function credit(doc: jsPDF) {
+// The credit page
+export async function credit(doc: jsPDF) {
   doc.setTextColor(Colors.text);
   doc.setFontSize(8);
+
+  const lineHeight = utils.ptToMM(9);
   let textTop = utils.pageHPercent(75);
-  doc.text("reMarkable Yearly Planner", utils.pageWPercent(5), textTop);
-  textTop += utils.ptToMM(12);
-  doc.text("by Lee", utils.pageWPercent(5), textTop);
-  doc.setFontSize(6);
-  textTop = utils.pageHPercent(80);
-  doc.text("Cover Photo from Unsplash", utils.pageWPercent(5), textTop);
-  textTop += utils.ptToMM(6);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Simple PDF Planner", utils.pageWPercent(5), textTop);
+
+  doc.setFont("helvetica", "normal", 400);
+  textTop += lineHeight + 2;
+  doc.text("© 2024 Lee Trout", utils.pageWPercent(5), textTop);
+  textTop += lineHeight;
+  doc.text("Licensed under CC BY 4.0", utils.pageWPercent(5), textTop);
+  textTop += lineHeight;
   doc.textWithLink(
-    "Massimiliano Morosinotto by therawhunter",
+    "Cover photo by Massimiliano Morosinotto on Unsplash",
     utils.pageWPercent(5),
     textTop,
     {
       url: "https://unsplash.com/photos/gray-mountain-during-daytime-photo-3i5PHVp1Fkw",
     },
   );
+  textTop += lineHeight;
+
+  // HACK: Unsure what is going on with the context save / reset
+  // but even though it says the lineWidth is 1 as default it is not
+  // behaving correctly without being set to .1 first.
+
+  // Draw Twitter logo
+  const ctx = doc.canvas.getContext("2d");
+  ctx.lineWidth = 0.1;
+  ctx.save();
+  ctx.translate(utils.pageWPercent(5), textTop);
+  ctx.scale(0.1, 0.1);
+  Icons.twitter.draw(ctx);
+  ctx.restore();
+
+  doc.setTextColor(Colors.text);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.textWithLink("@TheCodeWritesMe", utils.pageWPercent(5) + 3, textTop + 2, {
+    url: "https://twitter.com/TheCodeWritesMe",
+  });
+
+  doc.setFontSize(6);
+  textTop = utils.pageHPercent(80);
 }
 
 const months = [

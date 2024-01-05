@@ -10,7 +10,6 @@ const PLANNER_OUTPUT_NAME = "planner.pdf";
 // TODO
 // Configure fonts
 // See https://github.com/parallax/jsPDF/tree/master/fontconverter
-//console.log(doc.getFontList());
 console.log("util width", utils.pageWPercent(50));
 
 // TODO: This to support making this extensible
@@ -67,6 +66,9 @@ function generatePageSet(cfg: PlannerConfig): [Page[], PageIndex] {
 async function createPlanner(cfg: PlannerConfig) {
   const [pageSet] = generatePageSet(cfg);
   const doc = new JSPDF("p", "mm", [consts.Wmm, consts.Hmm], true);
+
+  console.log(doc.getFontList());
+
   for (let pgNum = 0; pgNum < pageSet.length; pgNum++) {
     const page = pageSet[pgNum];
 
