@@ -56,6 +56,7 @@ function generatePageSet(cfg: PlannerConfig): [Page[], PageIndex] {
         pages.push({
           layout: layouts.grid,
         });
+        curPage++;
       }
     }
   }
